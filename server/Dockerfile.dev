@@ -1,0 +1,19 @@
+ARG GO_VERSION=1.26
+FROM golang:${GO_VERSION}-alpine
+
+# build-base provides a C toolchain; git is needed by `go install`.
+RUN apk add --no-cache build-base git
+
+# air for live-reloading on source changes.
+RUN go install github.com/air-verse/air@latest
+
+WORKDIR /app/server
+
+# Pre-warm the module cache; the source itself is bind-mounted at runtime.
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+EXPOSE 3000
+CMD ["air", "-c", ".air.toml"]

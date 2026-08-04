@@ -7,9 +7,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<title>app</title>
+	<title>dropla</title>
 </svelte:head>
 
-<div class="mx-auto min-h-svh max-w-2xl px-5 py-12">
-	{@render children()}
-</div>
+{@render children()}

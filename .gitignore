@@ -5,3 +5,6 @@ tmp/
 .env
 .env.*
 !.env.example
+data/
+CONTEXT.md
+.scratch

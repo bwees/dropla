@@ -5,7 +5,10 @@ tmp_dir = "tmp"
 cmd = "go build -o ./tmp/app ."
 entrypoint = "./tmp/app"
 include_ext = ["go"]
-exclude_dir = ["tmp"]
+# data holds the SQLite file and every uploaded blob. Watching it makes the
+# reloader churn on uploads, downloads and deletes — and with the WAL journal it
+# changes constantly.
+exclude_dir = ["tmp", "data"]
 exclude_regex = ["_test\\.go"]
 stop_on_error = true
 delay = 500

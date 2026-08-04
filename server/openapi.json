@@ -1,10 +1,90 @@
 {
 	"components": {
 		"schemas": {
-			"CreateNoteDto": {
-				"description": "CreateNoteDto schema",
+			"AccessTokenCreatedDto": {
+				"description": "AccessTokenCreatedDto schema",
 				"properties": {
-					"body": {
+					"command": {
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"token": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"command",
+					"id",
+					"name",
+					"token"
+				],
+				"type": "object"
+			},
+			"AccessTokenDto": {
+				"description": "AccessTokenDto schema",
+				"properties": {
+					"createdAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"id": {
+						"type": "string"
+					},
+					"lastUsedAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"createdAt",
+					"id",
+					"name"
+				],
+				"type": "object"
+			},
+			"CreateAccessTokenDto": {
+				"description": "CreateAccessTokenDto schema",
+				"properties": {
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"name"
+				],
+				"type": "object"
+			},
+			"CreateShareDto": {
+				"description": "CreateShareDto schema",
+				"properties": {
+					"expiresInDays": {
+						"type": "integer"
+					},
+					"maxBytes": {
+						"format": "int64",
+						"type": "integer"
+					},
+					"maxDownloads": {
+						"type": "integer"
+					},
+					"maxFiles": {
+						"type": "integer"
+					},
+					"mode": {
+						"type": "string"
+					},
+					"notifyUrl": {
+						"type": "string"
+					},
+					"password": {
 						"type": "string"
 					},
 					"title": {
@@ -12,7 +92,76 @@
 					}
 				},
 				"required": [
-					"title"
+					"mode"
+				],
+				"type": "object"
+			},
+			"CreateUserDto": {
+				"description": "CreateUserDto schema",
+				"properties": {
+					"isAdmin": {
+						"type": "boolean"
+					},
+					"password": {
+						"minLength": 8,
+						"type": "string"
+					},
+					"username": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"password",
+					"username"
+				],
+				"type": "object"
+			},
+			"FinalizeResultDto": {
+				"description": "FinalizeResultDto schema",
+				"properties": {
+					"outcomes": {
+						"items": {
+							"properties": {
+								"accepted": {
+									"type": "boolean"
+								},
+								"name": {
+									"type": "string"
+								},
+								"reason": {
+									"type": "string"
+								},
+								"size": {
+									"format": "int64",
+									"type": "integer"
+								}
+							},
+							"required": [
+								"accepted",
+								"name",
+								"reason",
+								"size"
+							],
+							"type": "object",
+							"x-fuego-required-marker": true
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"outcomes"
+				],
+				"type": "object"
+			},
+			"FinalizeUploadDto": {
+				"description": "FinalizeUploadDto schema",
+				"properties": {
+					"uploadSessionId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"uploadSessionId"
 				],
 				"type": "object"
 			},
@@ -65,23 +214,386 @@
 				},
 				"type": "object"
 			},
-			"Note": {
-				"description": "Note schema",
+			"LoginDto": {
+				"description": "LoginDto schema",
 				"properties": {
-					"body": {
+					"password": {
 						"type": "string"
 					},
+					"username": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"password",
+					"username"
+				],
+				"type": "object"
+			},
+			"PublicShareDto": {
+				"description": "PublicShareDto schema",
+				"properties": {
+					"files": {
+						"items": {
+							"properties": {
+								"downloadPath": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								},
+								"size": {
+									"format": "int64",
+									"type": "integer"
+								}
+							},
+							"required": [
+								"downloadPath",
+								"name",
+								"size"
+							],
+							"type": "object",
+							"x-fuego-required-marker": true
+						},
+						"type": "array"
+					},
+					"mode": {
+						"type": "string"
+					},
+					"requiresPassword": {
+						"type": "boolean"
+					},
+					"state": {
+						"type": "string"
+					},
+					"title": {
+						"type": "string"
+					},
+					"totalBytes": {
+						"format": "int64",
+						"type": "integer"
+					},
+					"unlocked": {
+						"type": "boolean"
+					},
+					"zipPath": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"files",
+					"mode",
+					"requiresPassword",
+					"state",
+					"title",
+					"totalBytes",
+					"unlocked",
+					"zipPath"
+				],
+				"type": "object"
+			},
+			"SetPasswordDto": {
+				"description": "SetPasswordDto schema",
+				"properties": {
+					"currentPassword": {
+						"type": "string"
+					},
+					"newPassword": {
+						"minLength": 8,
+						"type": "string"
+					}
+				},
+				"required": [
+					"newPassword"
+				],
+				"type": "object"
+			},
+			"SetQuotaDto": {
+				"description": "SetQuotaDto schema",
+				"properties": {
+					"quotaBytes": {
+						"format": "int64",
+						"nullable": true,
+						"type": "integer"
+					}
+				},
+				"type": "object"
+			},
+			"SetupStatusDto": {
+				"description": "SetupStatusDto schema",
+				"properties": {
+					"setupRequired": {
+						"type": "boolean"
+					}
+				},
+				"required": [
+					"setupRequired"
+				],
+				"type": "object"
+			},
+			"ShareDto": {
+				"description": "ShareDto schema",
+				"properties": {
+					"createdAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"downloads": {
+						"type": "integer"
+					},
+					"expired": {
+						"type": "boolean"
+					},
+					"expiresAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"files": {
+						"items": {
+							"properties": {
+								"byOwner": {
+									"type": "boolean"
+								},
+								"contentType": {
+									"type": "string"
+								},
+								"downloadPath": {
+									"type": "string"
+								},
+								"id": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								},
+								"size": {
+									"format": "int64",
+									"type": "integer"
+								},
+								"uploadedAt": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"uploaderLabel": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"byOwner",
+								"contentType",
+								"downloadPath",
+								"id",
+								"name",
+								"size",
+								"uploadedAt",
+								"uploaderLabel"
+							],
+							"type": "object",
+							"x-fuego-required-marker": true
+						},
+						"type": "array"
+					},
+					"hasPassword": {
+						"type": "boolean"
+					},
 					"id": {
+						"type": "string"
+					},
+					"maxBytes": {
+						"format": "int64",
+						"type": "integer"
+					},
+					"maxDownloads": {
+						"type": "integer"
+					},
+					"maxFiles": {
+						"type": "integer"
+					},
+					"mode": {
+						"type": "string"
+					},
+					"notifyEnabled": {
+						"type": "boolean"
+					},
+					"notifyLastError": {
+						"type": "string"
+					},
+					"notifyLastErrorAt": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"notifyUrl": {
+						"type": "string"
+					},
+					"password": {
+						"type": "string"
+					},
+					"path": {
+						"type": "string"
+					},
+					"publicUrl": {
+						"type": "string"
+					},
+					"title": {
+						"type": "string"
+					},
+					"totalBytes": {
+						"format": "int64",
+						"type": "integer"
+					}
+				},
+				"required": [
+					"createdAt",
+					"downloads",
+					"expired",
+					"files",
+					"hasPassword",
+					"id",
+					"mode",
+					"notifyEnabled",
+					"notifyLastError",
+					"notifyUrl",
+					"password",
+					"path",
+					"publicUrl",
+					"title",
+					"totalBytes"
+				],
+				"type": "object"
+			},
+			"StorageOverviewDto": {
+				"description": "StorageOverviewDto schema",
+				"properties": {
+					"freeBytes": {
+						"format": "int64",
+						"type": "integer"
+					},
+					"users": {
+						"items": {
+							"properties": {
+								"quotaBytes": {
+									"format": "int64",
+									"type": "integer"
+								},
+								"shareCount": {
+									"type": "integer"
+								},
+								"usedBytes": {
+									"format": "int64",
+									"type": "integer"
+								},
+								"userId": {
+									"type": "string"
+								},
+								"username": {
+									"type": "string"
+								}
+							},
+							"required": [
+								"quotaBytes",
+								"shareCount",
+								"usedBytes",
+								"userId",
+								"username"
+							],
+							"type": "object",
+							"x-fuego-required-marker": true
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"freeBytes",
+					"users"
+				],
+				"type": "object"
+			},
+			"UnlockDto": {
+				"description": "UnlockDto schema",
+				"properties": {
+					"password": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"password"
+				],
+				"type": "object"
+			},
+			"UpdateShareDto": {
+				"description": "UpdateShareDto schema",
+				"properties": {
+					"expiresInDays": {
+						"type": "integer"
+					},
+					"maxBytes": {
+						"format": "int64",
+						"type": "integer"
+					},
+					"maxDownloads": {
+						"type": "integer"
+					},
+					"maxFiles": {
+						"type": "integer"
+					},
+					"notifyEnabled": {
+						"type": "boolean"
+					},
+					"notifyUrl": {
+						"type": "string"
+					},
+					"password": {
 						"type": "string"
 					},
 					"title": {
 						"type": "string"
 					}
 				},
+				"type": "object"
+			},
+			"UsageDto": {
+				"description": "UsageDto schema",
+				"properties": {
+					"quotaBytes": {
+						"format": "int64",
+						"type": "integer"
+					},
+					"shareCount": {
+						"type": "integer"
+					},
+					"usedBytes": {
+						"format": "int64",
+						"type": "integer"
+					}
+				},
 				"required": [
-					"body",
+					"quotaBytes",
+					"shareCount",
+					"usedBytes"
+				],
+				"type": "object"
+			},
+			"UserDto": {
+				"description": "UserDto schema",
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"isAdmin": {
+						"type": "boolean"
+					},
+					"quotaBytes": {
+						"format": "int64",
+						"type": "integer"
+					},
+					"username": {
+						"type": "string"
+					}
+				},
+				"required": [
 					"id",
-					"title"
+					"isAdmin",
+					"username"
 				],
 				"type": "object"
 			},
@@ -97,10 +609,672 @@
 	},
 	"openapi": "3.1.0",
 	"paths": {
-		"/api/notes/": {
+		"/api/auth/login": {
+			"post": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*AuthController).Register.func3`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "login",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/LoginDto"
+							}
+						}
+					},
+					"description": "Request body for dtos.LoginDto",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func3",
+				"tags": [
+					"api",
+					"auth"
+				]
+			}
+		},
+		"/api/auth/logout": {
+			"post": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*AuthController).Register.func4`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "logout",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/unknown-interface"
+								}
+							}
+						},
+						"description": "No Content"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func4",
+				"tags": [
+					"api",
+					"auth"
+				]
+			}
+		},
+		"/api/auth/me": {
 			"get": {
-				"description": "#### Controller: \n\n`app/internal/controllers.(*NotesController).Register.func1`\n\n---\n\n",
-				"operationId": "getNotes",
+				"description": "#### Controller: \n\n`app/internal/controllers.(*AuthController).Register.func5`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "getCurrentUser",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func5",
+				"tags": [
+					"api",
+					"auth"
+				]
+			}
+		},
+		"/api/auth/password": {
+			"post": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*AuthController).Register.func6`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "changePassword",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SetPasswordDto"
+							}
+						}
+					},
+					"description": "Request body for dtos.SetPasswordDto",
+					"required": true
+				},
+				"responses": {
+					"204": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/unknown-interface"
+								}
+							}
+						},
+						"description": "No Content"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func6",
+				"tags": [
+					"api",
+					"auth"
+				]
+			}
+		},
+		"/api/auth/setup": {
+			"get": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*AuthController).Register.func1`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "getSetupStatus",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SetupStatusDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func1",
+				"tags": [
+					"api",
+					"auth"
+				]
+			},
+			"post": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*AuthController).Register.func2`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "setup",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateUserDto"
+							}
+						}
+					},
+					"description": "Request body for dtos.CreateUserDto",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func2",
+				"tags": [
+					"api",
+					"auth"
+				]
+			}
+		},
+		"/api/s/{token}": {
+			"get": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*PublicController).Register.func1`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "getPublicShare",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "token",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PublicShareDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func1",
+				"tags": [
+					"api",
+					"s"
+				]
+			}
+		},
+		"/api/s/{token}/unlock": {
+			"post": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*PublicController).Register.func2`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "unlockShare",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "token",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UnlockDto"
+							}
+						}
+					},
+					"description": "Request body for dtos.UnlockDto",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PublicShareDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func2",
+				"tags": [
+					"api",
+					"s"
+				]
+			}
+		},
+		"/api/s/{token}/uploads/finalise": {
+			"post": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*PublicController).Register.func3`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "finaliseUpload",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "token",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/FinalizeUploadDto"
+							}
+						}
+					},
+					"description": "Request body for dtos.FinalizeUploadDto",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/FinalizeResultDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func3",
+				"tags": [
+					"api",
+					"s"
+				]
+			}
+		},
+		"/api/shares/": {
+			"get": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func1`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "getShares",
 				"parameters": [
 					{
 						"in": "header",
@@ -116,7 +1290,7 @@
 							"application/json": {
 								"schema": {
 									"items": {
-										"$ref": "#/components/schemas/Note"
+										"$ref": "#/components/schemas/ShareDto"
 									},
 									"type": "array"
 								}
@@ -161,12 +1335,12 @@
 				"summary": "func1",
 				"tags": [
 					"api",
-					"notes"
+					"shares"
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`app/internal/controllers.(*NotesController).Register.func2`\n\n---\n\n",
-				"operationId": "createNote",
+				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func2`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "createShare",
 				"parameters": [
 					{
 						"in": "header",
@@ -180,23 +1354,23 @@
 					"content": {
 						"application/json": {
 							"schema": {
-								"$ref": "#/components/schemas/CreateNoteDto"
+								"$ref": "#/components/schemas/CreateShareDto"
 							}
 						}
 					},
-					"description": "Request body for dtos.CreateNoteDto",
+					"description": "Request body for dtos.CreateShareDto",
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Note"
+									"$ref": "#/components/schemas/ShareDto"
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -235,14 +1409,14 @@
 				"summary": "func2",
 				"tags": [
 					"api",
-					"notes"
+					"shares"
 				]
 			}
 		},
-		"/api/notes/{id}": {
+		"/api/shares/{id}": {
 			"delete": {
-				"description": "#### Controller: \n\n`app/internal/controllers.(*NotesController).Register.func4`\n\n---\n\n",
-				"operationId": "deleteNote",
+				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func5`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "deleteShare",
 				"parameters": [
 					{
 						"in": "header",
@@ -305,15 +1479,15 @@
 						"description": ""
 					}
 				},
-				"summary": "func4",
+				"summary": "func5",
 				"tags": [
 					"api",
-					"notes"
+					"shares"
 				]
 			},
 			"get": {
-				"description": "#### Controller: \n\n`app/internal/controllers.(*NotesController).Register.func3`\n\n---\n\n",
-				"operationId": "getNote",
+				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func3`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "getShare",
 				"parameters": [
 					{
 						"in": "header",
@@ -336,7 +1510,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/Note"
+									"$ref": "#/components/schemas/ShareDto"
 								}
 							}
 						},
@@ -379,17 +1553,1005 @@
 				"summary": "func3",
 				"tags": [
 					"api",
-					"notes"
+					"shares"
+				]
+			},
+			"patch": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func4`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "updateShare",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UpdateShareDto"
+							}
+						}
+					},
+					"description": "Request body for dtos.UpdateShareDto",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ShareDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func4",
+				"tags": [
+					"api",
+					"shares"
+				]
+			}
+		},
+		"/api/shares/{id}/files/{fileId}": {
+			"delete": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func7`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "deleteShareFile",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "fileId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/unknown-interface"
+								}
+							}
+						},
+						"description": "No Content"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func7",
+				"tags": [
+					"api",
+					"shares"
+				]
+			}
+		},
+		"/api/shares/{id}/rotate-link": {
+			"post": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func6`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "rotateShareLink",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ShareDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func6",
+				"tags": [
+					"api",
+					"shares"
+				]
+			}
+		},
+		"/api/storage/": {
+			"get": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func9`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "getStorageOverview",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/StorageOverviewDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func9",
+				"tags": [
+					"api",
+					"storage"
+				]
+			}
+		},
+		"/api/tokens/": {
+			"get": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*TokensController).Register.func1`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "getAccessTokens",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/AccessTokenDto"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func1",
+				"tags": [
+					"api",
+					"tokens"
+				]
+			},
+			"post": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*TokensController).Register.func2`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "createAccessToken",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateAccessTokenDto"
+							}
+						}
+					},
+					"description": "Request body for dtos.CreateAccessTokenDto",
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AccessTokenCreatedDto"
+								}
+							}
+						},
+						"description": "Created"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func2",
+				"tags": [
+					"api",
+					"tokens"
+				]
+			}
+		},
+		"/api/tokens/{id}": {
+			"delete": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*TokensController).Register.func3`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "deleteAccessToken",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/unknown-interface"
+								}
+							}
+						},
+						"description": "No Content"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func3",
+				"tags": [
+					"api",
+					"tokens"
+				]
+			}
+		},
+		"/api/usage/": {
+			"get": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func8`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "getUsage",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UsageDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func8",
+				"tags": [
+					"api",
+					"usage"
+				]
+			}
+		},
+		"/api/users/": {
+			"get": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*UsersController).Register.func1`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "getUsers",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"items": {
+										"$ref": "#/components/schemas/UserDto"
+									},
+									"type": "array"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func1",
+				"tags": [
+					"api",
+					"users"
+				]
+			},
+			"post": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*UsersController).Register.func2`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "createUser",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/CreateUserDto"
+							}
+						}
+					},
+					"description": "Request body for dtos.CreateUserDto",
+					"required": true
+				},
+				"responses": {
+					"201": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/UserDto"
+								}
+							}
+						},
+						"description": "Created"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func2",
+				"tags": [
+					"api",
+					"users"
+				]
+			}
+		},
+		"/api/users/{id}": {
+			"delete": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*UsersController).Register.func3`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "deleteUser",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"204": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/unknown-interface"
+								}
+							}
+						},
+						"description": "No Content"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func3",
+				"tags": [
+					"api",
+					"users"
+				]
+			}
+		},
+		"/api/users/{id}/password": {
+			"post": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*UsersController).Register.func4`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "resetUserPassword",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SetPasswordDto"
+							}
+						}
+					},
+					"description": "Request body for dtos.SetPasswordDto",
+					"required": true
+				},
+				"responses": {
+					"204": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/unknown-interface"
+								}
+							}
+						},
+						"description": "No Content"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func4",
+				"tags": [
+					"api",
+					"users"
+				]
+			}
+		},
+		"/api/users/{id}/quota": {
+			"patch": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*UsersController).Register.func5`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "setUserQuota",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/SetQuotaDto"
+							}
+						}
+					},
+					"description": "Request body for dtos.SetQuotaDto",
+					"required": true
+				},
+				"responses": {
+					"204": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/unknown-interface"
+								}
+							}
+						},
+						"description": "No Content"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func5",
+				"tags": [
+					"api",
+					"users"
 				]
 			}
 		}
 	},
+	"servers": [
+		{
+			"description": "local server",
+			"url": "http://:3000"
+		}
+	],
 	"tags": [
 		{
 			"name": "api"
 		},
 		{
-			"name": "notes"
+			"name": "auth"
+		},
+		{
+			"name": "s"
+		},
+		{
+			"name": "shares"
+		},
+		{
+			"name": "storage"
+		},
+		{
+			"name": "tokens"
+		},
+		{
+			"name": "usage"
+		},
+		{
+			"name": "users"
 		}
 	]
 }

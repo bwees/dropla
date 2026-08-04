@@ -1,0 +1,15 @@
+**/node_modules
+**/dist
+**/.svelte-kit
+web/build
+.git
+.github
+.vscode
+.scratch
+data
+server/tmp
+server/data
+*.log
+*.db
+*.db-*
+.DS_Store

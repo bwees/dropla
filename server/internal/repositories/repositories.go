@@ -3,5 +3,8 @@ package repositories
 import "go.uber.org/fx"
 
 var Module = fx.Provide(
-	NewNotesRepository,
+	NewUsersRepository,
+	NewSessionsRepository,
+	NewAccessTokensRepository,
+	NewSharesRepository,
 )

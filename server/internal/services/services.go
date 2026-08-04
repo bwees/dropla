@@ -1,7 +1,15 @@
 package services
 
-import "go.uber.org/fx"
+import (
+	"github.com/google/uuid"
+	"go.uber.org/fx"
+)
+
+func uuidString() string { return uuid.NewString() }
 
 var Module = fx.Provide(
-	NewNotesService,
+	NewAuthService,
+	NewSharesService,
+	NewNotifyService,
+	NewSweepService,
 )
