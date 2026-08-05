@@ -16,10 +16,13 @@ type contextKey string
 const userContextKey contextKey = "user"
 
 // publicPaths are exact /api paths reachable without a session.
+// An anonymous visitor holding an Upload Box link needs the request-body ceiling
+// before uploading, so /api/config is reachable without a session.
 var publicPaths = map[string]bool{
 	"/api/auth/setup":  true,
 	"/api/auth/login":  true,
 	"/api/auth/logout": true,
+	"/api/config":      true,
 }
 
 // publicPrefixes are /api subtrees that authorise themselves rather than by

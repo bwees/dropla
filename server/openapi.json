@@ -214,6 +214,19 @@
 				},
 				"type": "object"
 			},
+			"InstanceConfigDto": {
+				"description": "InstanceConfigDto schema",
+				"properties": {
+					"maxRequestBytes": {
+						"format": "int64",
+						"type": "integer"
+					}
+				},
+				"required": [
+					"maxRequestBytes"
+				],
+				"type": "object"
+			},
 			"LoginDto": {
 				"description": "LoginDto schema",
 				"properties": {
@@ -1027,6 +1040,70 @@
 				"tags": [
 					"api",
 					"auth"
+				]
+			}
+		},
+		"/api/config": {
+			"get": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*ConfigController).Register.func1`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "getInstanceConfig",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/InstanceConfigDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func1",
+				"tags": [
+					"api"
 				]
 			}
 		},

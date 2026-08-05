@@ -1,5 +1,23 @@
-import { finaliseUpload } from '$lib/sdk';
+import { finaliseUpload, getInstanceConfig } from '$lib/sdk';
 import * as tus from 'tus-js-client';
+
+/**
+ * The request-body ceiling is advertised by the server rather than compiled in,
+ * because it is a property of the origin the app was loaded from: the public one
+ * may sit behind a proxy that caps request bodies while the private one reaches
+ * the instance directly. A static build cannot know which it is serving.
+ *
+ * Cached for the page's lifetime, since it cannot change without a reload, and
+ * resolved as uncapped on failure so a blip does not silently halve throughput.
+ */
+let ceiling: Promise<number> | null = null;
+
+function maxRequestBytes(): Promise<number> {
+	ceiling ??= getInstanceConfig()
+		.then((config) => config.maxRequestBytes)
+		.catch(() => 0);
+	return ceiling;
+}
 
 export type UploadStatus = 'pending' | 'uploading' | 'done' | 'error';
 
@@ -65,10 +83,12 @@ export class UploadBatch {
 	}
 
 	async run() {
+		const maxBytes = await maxRequestBytes();
+
 		// Sequential rather than parallel: several concurrent multi-gigabyte uploads
 		// compete for the same bandwidth and make every one of them look stalled.
 		for (const item of this.items) {
-			await this.uploadOne(item);
+			await this.uploadOne(item, maxBytes);
 			this.options.onFileDone?.();
 		}
 
@@ -80,16 +100,17 @@ export class UploadBatch {
 		this.finished = true;
 	}
 
-	private uploadOne(item: UploadItem): Promise<void> {
+	private uploadOne(item: UploadItem, maxBytes: number): Promise<void> {
 		return new Promise((resolve) => {
 			item.status = 'uploading';
 
 			const upload = new tus.Upload(item.file, {
 				endpoint: '/api/uploads/',
-				// tus-js-client defaults chunkSize to Infinity, which sends one huge
-				// PATCH that proxy body limits reject. 32 MB stays under Cloudflare's
-				// 100 MB per-request cap.
-				chunkSize: 32 * 1024 * 1024,
+				// An uncapped origin takes the file in a single request. Splitting it
+				// costs a round trip per boundary and, on network storage, a forced
+				// flush — so it is done only where a proxy would otherwise refuse the
+				// body outright.
+				chunkSize: maxBytes > 0 ? maxBytes : Number.POSITIVE_INFINITY,
 				removeFingerprintOnSuccess: true,
 				retryDelays: [0, 1000, 3000, 5000, 10000],
 				metadata: {

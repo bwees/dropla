@@ -57,6 +57,20 @@ func DefaultUserQuotaBytes() int64 { return envBytes("DEFAULT_USER_QUOTA_BYTES",
 // MaxUploadBytes caps a single file, independent of quotas. Zero means no limit.
 func MaxUploadBytes() int64 { return envBytes("MAX_UPLOAD_BYTES", 0) }
 
+// PublicMaxRequestBytes is the largest request body the public origin accepts,
+// for deployments where a proxy imposes a limit of its own: Cloudflare rejects
+// anything over 100MB outright, and no amount of retrying gets past it.
+//
+// Zero, the default, means uploads are sent whole. It is deliberately scoped to
+// the public origin, because the private one is assumed to reach the instance
+// directly and every chunk boundary costs a round trip and, on network storage,
+// a forced flush.
+//
+// Set it below the proxy's own limit rather than equal to it: a proxy counts the
+// whole request, so a body sized exactly to the documented ceiling can still be
+// refused.
+func PublicMaxRequestBytes() int64 { return envBytes("PUBLIC_MAX_REQUEST_BYTES", 0) }
+
 // ShareGracePeriod is how long blobs survive after a Share expires. Expiry
 // closes the public link; deletion of the data happens only after this window,
 // so an Upload Box that lapses before its Owner collects does not eat the files.

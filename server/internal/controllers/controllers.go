@@ -25,6 +25,7 @@ var Module = fx.Provide(
 	fx.Annotate(NewTokensController, fx.As(new(Controller)), fx.ResultTags(`group:"controllers"`)),
 	fx.Annotate(NewSharesController, fx.As(new(Controller)), fx.ResultTags(`group:"controllers"`)),
 	fx.Annotate(NewPublicController, fx.As(new(Controller)), fx.ResultTags(`group:"controllers"`)),
+	fx.Annotate(NewConfigController, fx.As(new(Controller)), fx.ResultTags(`group:"controllers"`)),
 
 	fx.Annotate(NewDownloadsController, fx.As(new(RootController)), fx.ResultTags(`group:"rootControllers"`)),
 	fx.Annotate(NewUploadsController, fx.As(new(RootController)), fx.ResultTags(`group:"rootControllers"`)),

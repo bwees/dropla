@@ -32,6 +32,8 @@ Open it in a browser and create the first account, which becomes the administrat
 
 Transfers are unbounded in size, so behind a reverse proxy raise the body-size and timeout limits. Caddy needs no changes; nginx and Cloudflare do.
 
+Where the limit cannot be raised — Cloudflare caps request bodies at 100MB below Enterprise — set `PUBLIC_MAX_REQUEST_BYTES` instead and uploads are split to fit. Only requests arriving on `PUBLIC_BASE_URL` are split, so reaching the same instance directly still sends each file in one request.
+
 ## Configuration
 
 | Variable | Default | |
@@ -42,6 +44,7 @@ Transfers are unbounded in size, so behind a reverse proxy raise the body-size a
 | `UPLOAD_DIR` | `/data/uploads` | Where uploaded files live |
 | `DEFAULT_USER_QUOTA_BYTES` | `0` | Storage per account, `0` for unlimited. Admins can override it per user |
 | `MAX_UPLOAD_BYTES` | `0` | Largest single file, `0` for unlimited |
+| `PUBLIC_MAX_REQUEST_BYTES` | `0` | Largest request body accepted on `PUBLIC_BASE_URL`, `0` to send each file in one request. Set it a little under the proxy's own limit — e.g. `95000000` behind Cloudflare |
 | `SHARE_GRACE_PERIOD` | `168h` | How long files survive after a share expires, so a share can still be extended |
 | `ABANDONED_UPLOAD_AFTER` | `48h` | When an unfinished upload is discarded |
 | `EMPTY_SHARE_AFTER` | `1h` | When a share that never received a file is discarded |

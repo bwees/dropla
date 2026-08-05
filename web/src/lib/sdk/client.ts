@@ -56,6 +56,9 @@ export type CreateUserDto = {
     password: string;
     username: string;
 };
+export type InstanceConfigDto = {
+    maxRequestBytes: number;
+};
 export type PublicShareDto = {
     files: {
         downloadPath: string;
@@ -318,6 +321,30 @@ export function setup(createUserDto: CreateUserDto, { accept }: {
             Accept: accept
         })
     })));
+}
+/**
+ * func1
+ */
+export function getInstanceConfig({ accept }: {
+    accept?: string;
+} = {}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: InstanceConfigDto;
+    } | {
+        status: 400;
+        data: HttpError;
+    } | {
+        status: 500;
+        data: HttpError;
+    } | {
+        status: number;
+    }>("/api/config", {
+        ...opts,
+        headers: oazapfts.mergeHeaders(opts?.headers, {
+            Accept: accept
+        })
+    }));
 }
 /**
  * func1
