@@ -83,6 +83,19 @@ func (r *SharesRepository) FilesForSession(sessionID string) ([]models.ShareFile
 	return out, err
 }
 
+// ShareForUploadSession resolves the Share one drop's files landed in, which for
+// a drop that created its own Share is the only way back to it: the client knew
+// no Share when it started. Nil when nothing landed.
+func (r *SharesRepository) ShareForUploadSession(sessionID string) (*models.Share, error) {
+	f := models.ShareFile{}
+	file, err := notFoundAsNil(&f, r.db.Order("uploaded_at").
+		First(&f, "upload_session_id = ?", sessionID).Error)
+	if err != nil || file == nil {
+		return nil, err
+	}
+	return r.Get(file.ShareID)
+}
+
 // ShareUsage reports the committed bytes and file count of one Share, used for
 // the per-Upload-Box caps.
 func (r *SharesRepository) ShareUsage(shareID string) (bytes int64, files int, err error) {
@@ -182,19 +195,6 @@ func (r *SharesRepository) SweepableShares(grace time.Duration) ([]models.Share,
 	out := []models.Share{}
 	cutoff := time.Now().Add(-grace)
 	err := r.db.Where("expires_at IS NOT NULL AND expires_at < ?", cutoff).Find(&out).Error
-	return out, err
-}
-
-// EmptyShares have no files and nothing in flight. Drop-first creation means a
-// Share can exist having never held anything; these are swept rather than kept.
-func (r *SharesRepository) EmptyShares(olderThan time.Duration) ([]models.Share, error) {
-	out := []models.Share{}
-	cutoff := time.Now().Add(-olderThan)
-	err := r.db.
-		Where("created_at < ?", cutoff).
-		Where("NOT EXISTS (SELECT 1 FROM share_file WHERE share_file.share_id = share.id)").
-		Where("NOT EXISTS (SELECT 1 FROM pending_upload WHERE pending_upload.share_id = share.id)").
-		Find(&out).Error
 	return out, err
 }
 

@@ -103,57 +103,18 @@ func (c *UploadsController) tusRouter() http.Handler {
 
 // authoriseCreate decides whether an upload may start, and reserves its quota.
 //
-// It handles both callers with one code path: an authenticated Owner uploading to
-// their own Share, and an anonymous visitor uploading to an Upload Box whose link
-// they hold. The distinction is drawn from the request, not from metadata.
+// It handles three callers: an authenticated Owner adding to their own Share, an
+// anonymous visitor uploading to an Upload Box whose link they hold, and an Owner
+// sending files that have no Share yet. The distinction is drawn from the request,
+// not from metadata.
 func (c *UploadsController) authoriseCreate(hook tusd.HookEvent) (tusd.HTTPResponse, tusd.FileInfoChanges, error) {
-	reject := func(status int, msg string) (tusd.HTTPResponse, tusd.FileInfoChanges, error) {
-		return tusd.HTTPResponse{}, tusd.FileInfoChanges{}, tusd.NewError("ERR_FORBIDDEN", msg, status)
-	}
-
 	meta := hook.Upload.MetaData
-	token := meta["shareToken"]
-	if token == "" {
-		return reject(http.StatusBadRequest, "shareToken metadata is required")
-	}
-
-	share, err := c.svc.ResolvePublic(token)
-	if err != nil {
-		return reject(http.StatusNotFound, "share not found")
-	}
 
 	// tus's hook carries only headers, not the request context, so the session is
 	// resolved from the cookie here rather than read from middleware state.
-	r := hook.HTTPRequest
 	var user *models.User
-	if token := cookieFromHeader(r.Header.Get("Cookie"), sessionCookieName); token != "" {
+	if token := cookieFromHeader(hook.HTTPRequest.Header.Get("Cookie"), sessionCookieName); token != "" {
 		user, _ = c.auth.Authenticate(token)
-	}
-	byOwner := user != nil && user.ID == share.OwnerID
-
-	if !byOwner {
-		// A visitor may only ever add to an Upload Box, never to a Send Share.
-		if share.Mode != models.ShareModeUploadBox {
-			return reject(http.StatusForbidden, "this share does not accept uploads")
-		}
-		if share.PublicAccessClosed() {
-			return reject(http.StatusGone, "this share has expired")
-		}
-		if share.HasPassword() {
-			cookie := cookieFromHeader(r.Header.Get("Cookie"), "dropla_s_"+share.ID)
-			if !c.svc.Unlocked(share, cookie) {
-				return reject(http.StatusUnauthorized, "this share is password protected")
-			}
-		}
-	}
-
-	declared := hook.Upload.Size
-	if err := c.svc.CheckUploadAllowed(share, declared); err != nil {
-		status := http.StatusRequestEntityTooLarge
-		if err == services.ErrUploadBoxFull {
-			status = http.StatusForbidden
-		}
-		return reject(status, err.Error())
 	}
 
 	// hook.Upload.ID is empty here: this callback runs before tus assigns one. So
@@ -161,23 +122,91 @@ func (c *UploadsController) authoriseCreate(hook tusd.HookEvent) (tusd.HTTPRespo
 	// reservation row and the upload share a primary key. Without this the
 	// reservation is written under an empty id and the completion hook cannot
 	// find it.
-	uploadID := uuid.NewString()
-
 	pending := &models.PendingUpload{
-		ID:              uploadID,
-		OwnerID:         share.OwnerID,
-		ShareID:         share.ID,
-		DeclaredSize:    declared,
+		ID:              uuid.NewString(),
+		DeclaredSize:    hook.Upload.Size,
 		UploadSessionID: meta["uploadSessionId"],
-		ByOwner:         byOwner,
 		UploaderLabel:   truncate(meta["uploaderLabel"], 120),
 		Name:            sanitiseFilename(meta["filename"]),
 	}
-	if err := c.svc.ReserveWithID(pending); err != nil {
-		return reject(http.StatusInternalServerError, "could not reserve upload")
+
+	var err error
+	if token := meta["shareToken"]; token != "" {
+		err = c.authoriseIntoShare(hook.HTTPRequest, user, token, pending)
+	} else {
+		err = c.authoriseNewShare(user, meta["newShareTitle"], pending)
+	}
+	if err != nil {
+		return tusd.HTTPResponse{}, tusd.FileInfoChanges{}, err
 	}
 
-	return tusd.HTTPResponse{}, tusd.FileInfoChanges{ID: uploadID}, nil
+	if err := c.svc.ReserveWithID(pending); err != nil {
+		return tusd.HTTPResponse{}, tusd.FileInfoChanges{}, refuse(http.StatusInternalServerError, "could not reserve upload")
+	}
+	return tusd.HTTPResponse{}, tusd.FileInfoChanges{ID: pending.ID}, nil
+}
+
+func (c *UploadsController) authoriseIntoShare(r tusd.HTTPRequest, user *models.User, token string, pending *models.PendingUpload) error {
+	share, err := c.svc.ResolvePublic(token)
+	if err != nil {
+		return refuse(http.StatusNotFound, "share not found")
+	}
+
+	byOwner := user != nil && user.ID == share.OwnerID
+	if !byOwner {
+		// A visitor may only ever add to an Upload Box, never to a Send Share.
+		if share.Mode != models.ShareModeUploadBox {
+			return refuse(http.StatusForbidden, "this share does not accept uploads")
+		}
+		if share.PublicAccessClosed() {
+			return refuse(http.StatusGone, "this share has expired")
+		}
+		if share.HasPassword() {
+			cookie := cookieFromHeader(r.Header.Get("Cookie"), "dropla_s_"+share.ID)
+			if !c.svc.Unlocked(share, cookie) {
+				return refuse(http.StatusUnauthorized, "this share is password protected")
+			}
+		}
+	}
+
+	if err := c.svc.CheckUploadAllowed(share, pending.DeclaredSize); err != nil {
+		return refuseUpload(err)
+	}
+
+	pending.OwnerID = share.OwnerID
+	pending.ShareID = share.ID
+	pending.ByOwner = byOwner
+	return nil
+}
+
+// authoriseNewShare admits an upload that has no Share to go into. The Share is
+// created when the first file lands, so a drop where everything fails leaves no
+// empty Share behind — and a Share is never made on the strength of an upload
+// that might never arrive.
+func (c *UploadsController) authoriseNewShare(user *models.User, title string, pending *models.PendingUpload) error {
+	if user == nil {
+		return refuse(http.StatusUnauthorized, "sign in to send files")
+	}
+	if err := c.svc.CheckOwnerUploadAllowed(user.ID, pending.DeclaredSize); err != nil {
+		return refuseUpload(err)
+	}
+
+	pending.OwnerID = user.ID
+	pending.ByOwner = true
+	pending.NewShareTitle = truncate(title, 200)
+	return nil
+}
+
+func refuse(status int, msg string) error {
+	return tusd.NewError("ERR_FORBIDDEN", msg, status)
+}
+
+func refuseUpload(err error) error {
+	status := http.StatusRequestEntityTooLarge
+	if err == services.ErrUploadBoxFull {
+		status = http.StatusForbidden
+	}
+	return refuse(status, err.Error())
 }
 
 // consumeCompletions must exist for every notification channel that is enabled:
@@ -219,15 +248,21 @@ func (c *UploadsController) commit(event tusd.HookEvent) {
 		name = "file"
 	}
 
+	share, err := c.svc.ShareForPending(pending)
+	if err != nil || share == nil {
+		slog.Error("could not resolve the share for a completed upload", "upload", info.ID, "error", err)
+		return
+	}
+
 	// info.Size is the real byte count, not the client's declared claim.
-	file, err := c.svc.Commit(pending, name, info.Size, info.MetaData["filetype"])
+	file, err := c.svc.Commit(pending, share.ID, name, info.Size, info.MetaData["filetype"])
 	if err != nil {
 		slog.Error("could not record uploaded file", "upload", info.ID, "error", err)
 		return
 	}
 
 	src := c.storage.TusDir() + "/" + info.ID
-	if err := c.storage.Commit(src, pending.ShareID, file.ID); err != nil {
+	if err := c.storage.Commit(src, share.ID, file.ID); err != nil {
 		slog.Error("could not move uploaded blob into share", "upload", info.ID, "error", err)
 		return
 	}

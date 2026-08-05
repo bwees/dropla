@@ -87,8 +87,15 @@ export class UploadItem {
 	}
 }
 
+/**
+ * Where a batch is going: an existing share, or a share the server creates once
+ * the first file lands. Sending files needs no share up front, so a drop that
+ * fails outright leaves nothing behind — ask for the resulting share afterwards
+ * with getUploadSessionShare(sessionId).
+ */
 export type UploadBatchOptions = {
-	shareToken: string;
+	shareToken?: string;
+	newShareTitle?: string;
 	uploaderLabel?: string;
 	onFileDone?: () => void;
 };
@@ -161,10 +168,14 @@ export class UploadBatch {
 			clearInterval(ticker);
 		}
 
-		try {
-			await finaliseUpload(this.options.shareToken, { uploadSessionId: this.sessionId });
-		} catch {
-			// A failed finalise costs a notification, not the files themselves.
+		// Finalising reports per-file outcomes and sends the Owner's notification,
+		// both of which belong to a share that already existed.
+		if (this.options.shareToken) {
+			try {
+				await finaliseUpload(this.options.shareToken, { uploadSessionId: this.sessionId });
+			} catch {
+				// A failed finalise costs a notification, not the files themselves.
+			}
 		}
 		this.finished = true;
 	}
@@ -186,7 +197,8 @@ export class UploadBatch {
 				metadata: {
 					filename: item.file.name,
 					filetype: item.file.type,
-					shareToken: this.options.shareToken,
+					shareToken: this.options.shareToken ?? '',
+					newShareTitle: this.options.newShareTitle ?? '',
 					uploadSessionId: this.sessionId,
 					uploaderLabel: this.options.uploaderLabel ?? ''
 				},

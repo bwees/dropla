@@ -80,8 +80,3 @@ func ShareGracePeriod() time.Duration { return envDuration("SHARE_GRACE_PERIOD",
 func AbandonedUploadAfter() time.Duration { return envDuration("ABANDONED_UPLOAD_AFTER", 48*time.Hour) }
 
 func SweepInterval() time.Duration { return envDuration("SWEEP_INTERVAL", time.Hour) }
-
-// EmptyShareAfter is how long a Share with no files and no uploads in flight
-// survives. Drop-first creation means a Share can exist having never held
-// anything, so these are swept rather than left forever.
-func EmptyShareAfter() time.Duration { return envDuration("EMPTY_SHARE_AFTER", time.Hour) }

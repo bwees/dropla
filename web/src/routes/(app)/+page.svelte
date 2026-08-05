@@ -6,10 +6,16 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Progress } from '$lib/components/ui/progress';
 	import * as Tabs from '$lib/components/ui/tabs';
-	import { apiErrorMessage, createShare, getShares, getUsage, type ShareDto } from '$lib/sdk';
+	import {
+		apiErrorMessage,
+		createShare,
+		getShares,
+		getUploadSessionShare,
+		getUsage,
+		type ShareDto
+	} from '$lib/sdk';
 	import { UploadBatch } from '$lib/transfer/upload.svelte';
 	import { formatBytes } from '$lib/utils/format';
-	import { shareToken } from '$lib/utils/share';
 	import Inbox from '@lucide/svelte/icons/inbox';
 	import Plus from '@lucide/svelte/icons/plus';
 	import Upload from '@lucide/svelte/icons/upload';
@@ -41,8 +47,9 @@
 		}
 	}
 
-	// The share is created before the first byte moves, which is also what tus
-	// requires: an upload has to have a target.
+	// No share is created here: the server makes one when the first file lands, so
+	// a drop that fails outright leaves nothing behind. Which share it made is then
+	// looked up by the upload session's id.
 	async function send(files: File[]) {
 		if (files.length === 0) return;
 		// A drop can land while the Upload Boxes tab is showing; the result belongs
@@ -51,29 +58,26 @@
 
 		const title = files.length === 1 ? files[0].name : `${files.length} files`;
 
-		let share: ShareDto;
-		let token: string;
-		try {
-			share = await createShare({ title, mode: 'send' });
-			token = shareToken(share);
-		} catch (e) {
-			toast.error(apiErrorMessage(e, 'Could not create the share.'));
-			return;
-		}
-
-		const running = new UploadBatch(files, { shareToken: token });
+		const running = new UploadBatch(files, { newShareTitle: title });
 		batch = running;
 
 		await running.run();
 		await refresh();
 
 		const failed = running.items.filter((i) => i.status === 'error');
-		if (failed.length === 0) {
-			toast.success(files.length === 1 ? 'File uploaded' : `${files.length} files uploaded`);
-			batch = null;
-			await goto(`/shares/${share.id}`);
-		} else {
+		if (failed.length > 0) {
 			toast.error(`${failed.length} of ${files.length} failed`);
+			return;
+		}
+
+		toast.success(files.length === 1 ? 'File uploaded' : `${files.length} files uploaded`);
+		batch = null;
+
+		try {
+			const share = await getUploadSessionShare(running.sessionId);
+			await goto(`/shares/${share.id}`);
+		} catch (e) {
+			toast.error(apiErrorMessage(e, 'Could not open the share.'));
 		}
 	}
 

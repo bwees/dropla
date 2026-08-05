@@ -182,6 +182,22 @@ func (c *SharesController) Register(api *fuego.Server) {
 		return nil, c.svc.DeleteFile(user.ID, ctx.PathParam("id"), ctx.PathParam("fileId"))
 	}, fuego.OptionOperationID("deleteShareFile"), fuego.OptionDefaultStatusCode(204))
 
+	// A drop that creates its own Share starts out knowing no Share id, so this is
+	// how the client finds what its upload session produced. 404 while nothing has
+	// landed is the honest answer: no Share exists yet.
+	sessions := fuego.Group(api, "/upload-sessions")
+	fuego.Get(sessions, "/{sessionId}/share", func(ctx fuego.ContextNoBody) (dtos.ShareDto, error) {
+		user, err := requireUser(ctx.Request().Context())
+		if err != nil {
+			return dtos.ShareDto{}, err
+		}
+		share, err := c.svc.ShareForUploadSession(user.ID, ctx.PathParam("sessionId"))
+		if err != nil {
+			return dtos.ShareDto{}, err
+		}
+		return shareDto(share), nil
+	}, fuego.OptionOperationID("getUploadSessionShare"))
+
 	usage := fuego.Group(api, "/usage")
 	fuego.Get(usage, "/", func(ctx fuego.ContextNoBody) (dtos.UsageDto, error) {
 		user, err := requireUser(ctx.Request().Context())

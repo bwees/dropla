@@ -598,7 +598,7 @@ export function rotateShareLink(id: string, { accept }: {
     }));
 }
 /**
- * func9
+ * func10
  */
 export function getStorageOverview({ accept }: {
     accept?: string;
@@ -698,6 +698,30 @@ export function deleteAccessToken(id: string, { accept }: {
 }
 /**
  * func8
+ */
+export function getUploadSessionShare(sessionId: string, { accept }: {
+    accept?: string;
+} = {}, opts?: Oazapfts.RequestOpts) {
+    return oazapfts.ok(oazapfts.fetchJson<{
+        status: 200;
+        data: ShareDto;
+    } | {
+        status: 400;
+        data: HttpError;
+    } | {
+        status: 500;
+        data: HttpError;
+    } | {
+        status: number;
+    }>(`/api/upload-sessions/${encodeURIComponent(sessionId)}/share`, {
+        ...opts,
+        headers: oazapfts.mergeHeaders(opts?.headers, {
+            Accept: accept
+        })
+    }));
+}
+/**
+ * func9
  */
 export function getUsage({ accept }: {
     accept?: string;

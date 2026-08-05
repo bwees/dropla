@@ -116,7 +116,12 @@ func (c *CliController) uploadNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c.store(w, r, share, user, name, true)
+	// A single PUT has to know where it is writing before the body arrives, so the
+	// Share cannot be deferred the way a tus drop defers it. Rolling it back is
+	// what keeps a failed transfer from leaving an empty Share behind.
+	if !c.store(w, r, share, name, true) {
+		_ = c.shares.Delete(user.ID, share.ID)
+	}
 }
 
 func (c *CliController) uploadToBox(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +153,7 @@ func (c *CliController) uploadToBox(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	c.store(w, r, share, nil, name, false)
+	c.store(w, r, share, name, false)
 }
 
 // filename rejects a hostile name loudly rather than silently normalising it, so
@@ -178,7 +183,8 @@ func (c *CliController) filename(w http.ResponseWriter, r *http.Request) (string
 	return sanitiseFilename(name), true
 }
 
-func (c *CliController) store(w http.ResponseWriter, r *http.Request, share *models.Share, owner *models.User, name string, byOwner bool) {
+// store streams the body into the Share, reporting whether the file landed.
+func (c *CliController) store(w http.ResponseWriter, r *http.Request, share *models.Share, name string, byOwner bool) bool {
 	declared := r.ContentLength
 	if declared < 0 {
 		declared = 0
@@ -186,7 +192,7 @@ func (c *CliController) store(w http.ResponseWriter, r *http.Request, share *mod
 
 	if err := c.shares.CheckUploadAllowed(share, declared); err != nil {
 		c.fail(w, r, statusFor(err), err.Error())
-		return
+		return false
 	}
 
 	// An upload of unknown length (curl -T - from a pipe) sends no Content-Length,
@@ -195,7 +201,7 @@ func (c *CliController) store(w http.ResponseWriter, r *http.Request, share *mod
 	remaining, err := c.shares.RemainingQuota(share)
 	if err != nil {
 		c.fail(w, r, http.StatusInternalServerError, err.Error())
-		return
+		return false
 	}
 
 	body := io.Reader(r.Body)
@@ -235,7 +241,7 @@ func (c *CliController) store(w http.ResponseWriter, r *http.Request, share *mod
 	}
 	if err := c.shares.ReserveWithID(pending); err != nil {
 		c.fail(w, r, http.StatusInternalServerError, "could not reserve upload")
-		return
+		return false
 	}
 
 	fileID := uuid.NewString()
@@ -243,7 +249,7 @@ func (c *CliController) store(w http.ResponseWriter, r *http.Request, share *mod
 	if err != nil {
 		_ = c.shares.ReleasePending(pending.ID)
 		c.fail(w, r, http.StatusInternalServerError, "upload failed: "+err.Error())
-		return
+		return false
 	}
 
 	if limit >= 0 && written > limit {
@@ -251,14 +257,14 @@ func (c *CliController) store(w http.ResponseWriter, r *http.Request, share *mod
 		_ = c.shares.ReleasePending(pending.ID)
 		c.fail(w, r, http.StatusRequestEntityTooLarge,
 			"upload refused: it would exceed the available space")
-		return
+		return false
 	}
 
-	file, err := c.shares.Commit(pending, name, written, r.Header.Get("Content-Type"))
+	file, err := c.shares.Commit(pending, share.ID, name, written, r.Header.Get("Content-Type"))
 	if err != nil {
 		_ = c.storage.Remove(share.ID, fileID)
 		c.fail(w, r, http.StatusInternalServerError, err.Error())
-		return
+		return false
 	}
 
 	// Commit generated its own id; move the blob to match it.
@@ -271,6 +277,7 @@ func (c *CliController) store(w http.ResponseWriter, r *http.Request, share *mod
 	}
 
 	c.respond(w, r, share, file, written)
+	return true
 }
 
 func (c *CliController) respond(w http.ResponseWriter, r *http.Request, share *models.Share, file *models.ShareFile, size int64) {

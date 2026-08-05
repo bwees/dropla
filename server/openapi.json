@@ -1872,7 +1872,7 @@
 		},
 		"/api/storage/": {
 			"get": {
-				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func9`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func10`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
 				"operationId": "getStorageOverview",
 				"parameters": [
 					{
@@ -1928,7 +1928,7 @@
 						"description": ""
 					}
 				},
-				"summary": "func9",
+				"summary": "func10",
 				"tags": [
 					"api",
 					"storage"
@@ -2150,9 +2150,82 @@
 				]
 			}
 		},
-		"/api/usage/": {
+		"/api/upload-sessions/{sessionId}/share": {
 			"get": {
 				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func8`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
+				"operationId": "getUploadSessionShare",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ShareDto"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "func8",
+				"tags": [
+					"api",
+					"upload-sessions"
+				]
+			}
+		},
+		"/api/usage/": {
+			"get": {
+				"description": "#### Controller: \n\n`app/internal/controllers.(*SharesController).Register.func9`\n\n#### Middlewares:\n\n- `app/internal/controllers.(*AuthMiddleware).Handler`\n\n---\n\n",
 				"operationId": "getUsage",
 				"parameters": [
 					{
@@ -2208,7 +2281,7 @@
 						"description": ""
 					}
 				},
-				"summary": "func8",
+				"summary": "func9",
 				"tags": [
 					"api",
 					"usage"
@@ -2599,12 +2672,6 @@
 			}
 		}
 	},
-	"servers": [
-		{
-			"description": "local server",
-			"url": "http://:3000"
-		}
-	],
 	"tags": [
 		{
 			"name": "api"
@@ -2623,6 +2690,9 @@
 		},
 		{
 			"name": "tokens"
+		},
+		{
+			"name": "upload-sessions"
 		},
 		{
 			"name": "usage"

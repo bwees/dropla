@@ -350,10 +350,6 @@ func (s *SharesService) quotaFor(user *models.User) int64 {
 // which case only the caps that do not depend on size are checked here and the
 // running total is enforced while streaming.
 func (s *SharesService) CheckUploadAllowed(share *models.Share, declaredSize int64) error {
-	if max := config.MaxUploadBytes(); max > 0 && declaredSize > max {
-		return ErrFileTooLarge
-	}
-
 	bytes, files, err := s.shares.ShareUsage(share.ID)
 	if err != nil {
 		return err
@@ -364,8 +360,18 @@ func (s *SharesService) CheckUploadAllowed(share *models.Share, declaredSize int
 	if share.MaxBytes != nil && bytes+declaredSize > *share.MaxBytes {
 		return ErrUploadBoxFull
 	}
+	return s.CheckOwnerUploadAllowed(share.OwnerID, declaredSize)
+}
 
-	owner, err := s.users.GetByID(share.OwnerID)
+// CheckOwnerUploadAllowed enforces the limits that belong to the account rather
+// than to one Share, which is all there is to check for an upload whose Share
+// does not exist yet.
+func (s *SharesService) CheckOwnerUploadAllowed(ownerID string, declaredSize int64) error {
+	if max := config.MaxUploadBytes(); max > 0 && declaredSize > max {
+		return ErrFileTooLarge
+	}
+
+	owner, err := s.users.GetByID(ownerID)
 	if err != nil {
 		return err
 	}
@@ -380,7 +386,7 @@ func (s *SharesService) CheckUploadAllowed(share *models.Share, declaredSize int
 
 	// Usage already includes in-flight reservations, so two concurrent uploads
 	// cannot both pass a check they would jointly breach.
-	used, err := s.shares.OwnerUsage(share.OwnerID)
+	used, err := s.shares.OwnerUsage(ownerID)
 	if err != nil {
 		return err
 	}
@@ -430,11 +436,44 @@ func (s *SharesService) ReleasePending(id string) error {
 	return s.shares.DeletePendingUpload(id)
 }
 
+// ShareForPending resolves the Share a finished upload belongs to, creating it
+// for a drop that started without one so that a Share only ever exists once a
+// file has actually arrived.
+//
+// Creating here is safe without locking because tus delivers completions on a
+// single goroutine: two files of one drop can never both find the Share missing.
+func (s *SharesService) ShareForPending(p *models.PendingUpload) (*models.Share, error) {
+	if p.ShareID != "" {
+		return s.shares.Get(p.ShareID)
+	}
+
+	share, err := s.shares.ShareForUploadSession(p.UploadSessionID)
+	if err != nil || share != nil {
+		return share, err
+	}
+	return s.Create(p.OwnerID, dtos.CreateShareDto{
+		Title: p.NewShareTitle,
+		Mode:  string(models.ShareModeSend),
+	})
+}
+
+// ShareForUploadSession is how a client learns which Share its drop created.
+func (s *SharesService) ShareForUploadSession(ownerID, sessionID string) (*models.Share, error) {
+	share, err := s.shares.ShareForUploadSession(sessionID)
+	if err != nil {
+		return nil, err
+	}
+	if share == nil || share.OwnerID != ownerID {
+		return nil, ErrShareNotFound
+	}
+	return share, nil
+}
+
 // Commit turns a finished upload into a file in the Share and releases its
 // reservation.
-func (s *SharesService) Commit(p *models.PendingUpload, name string, size int64, contentType string) (*models.ShareFile, error) {
+func (s *SharesService) Commit(p *models.PendingUpload, shareID, name string, size int64, contentType string) (*models.ShareFile, error) {
 	file := &models.ShareFile{
-		ShareID:         p.ShareID,
+		ShareID:         shareID,
 		Name:            name,
 		Size:            size,
 		ContentType:     contentType,

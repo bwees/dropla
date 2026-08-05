@@ -47,7 +47,6 @@ Where the limit cannot be raised — Cloudflare caps request bodies at 100MB bel
 | `PUBLIC_MAX_REQUEST_BYTES` | `0` | Largest request body accepted on `PUBLIC_BASE_URL`, `0` to send each file in one request. Set it a little under the proxy's own limit — e.g. `95000000` behind Cloudflare |
 | `SHARE_GRACE_PERIOD` | `168h` | How long files survive after a share expires, so a share can still be extended |
 | `ABANDONED_UPLOAD_AFTER` | `48h` | When an unfinished upload is discarded |
-| `EMPTY_SHARE_AFTER` | `1h` | When a share that never received a file is discarded |
 | `SWEEP_INTERVAL` | `1h` | How often cleanup runs |
 
 Point `DATABASE_DIR` and `UPLOAD_DIR` at separate volumes if you want the files on different storage from the database.

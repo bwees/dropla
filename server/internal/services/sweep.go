@@ -14,13 +14,12 @@ import (
 	"go.uber.org/fx"
 )
 
-// SweepService owns every scheduled cleanup. Three jobs share one ticker:
+// SweepService owns every scheduled cleanup. Two jobs share one ticker:
 //
 //  1. Shares whose expiry plus the grace period has passed. Expiry closes the
 //     public link immediately; the data survives the grace window so an Upload Box
 //     that lapses before its Owner collects does not eat the files.
 //  2. Abandoned tus uploads.
-//  3. Shares that never received a file, which drop-first creation makes possible.
 //
 // Every job is idempotent, and the sweep also runs once at startup so an instance
 // that was down for a week catches up rather than waiting for the first tick.
@@ -70,7 +69,6 @@ func (s *SweepService) Start(lc fx.Lifecycle) {
 func (s *SweepService) RunOnce() {
 	s.sweepExpiredShares()
 	s.sweepAbandonedUploads()
-	s.sweepEmptyShares()
 	if err := s.sessions.DeleteExpired(); err != nil {
 		slog.Warn("sweep: expired sessions", "error", err)
 	}
@@ -123,22 +121,5 @@ func (s *SweepService) sweepAbandonedUploads() {
 			continue
 		}
 		slog.Info("sweep: removed abandoned upload", "upload", p.ID)
-	}
-}
-
-func (s *SweepService) sweepEmptyShares() {
-	shares, err := s.shares.EmptyShares(config.EmptyShareAfter())
-	if err != nil {
-		slog.Warn("sweep: empty shares", "error", err)
-		return
-	}
-
-	for _, share := range shares {
-		_ = s.storage.RemoveShare(share.ID)
-		if err := s.shares.Delete(share.ID); err != nil {
-			slog.Warn("sweep: delete empty share", "share", share.ID, "error", err)
-			continue
-		}
-		slog.Info("sweep: deleted share that never received a file", "share", share.ID)
 	}
 }

@@ -44,10 +44,15 @@ func (ShareFile) TableName() string { return "share_file" }
 // on disk, it gives the abandoned-upload sweep a set to enumerate instead of
 // scanning the upload directory, and it is the trusted server-side binding from
 // an upload to its target Share — never taken from client-supplied tus metadata.
+//
+// ShareID is empty for an upload that has no Share yet: an Owner dropping files
+// to send creates one when the first file lands, so a drop where every file
+// fails leaves nothing behind. NewShareTitle carries the title to give it.
 type PendingUpload struct {
 	ID              string    `gorm:"primaryKey" json:"id"`
 	OwnerID         string    `gorm:"index;not null" json:"ownerId"`
 	ShareID         string    `gorm:"index;not null" json:"shareId"`
+	NewShareTitle   string    `json:"newShareTitle"`
 	DeclaredSize    int64     `gorm:"not null" json:"declaredSize"`
 	UploadSessionID string    `gorm:"index" json:"uploadSessionId"`
 	ByOwner         bool      `gorm:"not null;default:false" json:"byOwner"`
