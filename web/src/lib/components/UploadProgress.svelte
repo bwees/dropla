@@ -3,7 +3,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { Progress } from '$lib/components/ui/progress';
 	import type { UploadBatch } from '$lib/transfer/upload.svelte';
-	import { formatBytes } from '$lib/utils/format';
+	import { formatBytes, formatDuration, formatRate } from '$lib/utils/format';
 	import CircleCheck from '@lucide/svelte/icons/circle-check';
 	import CircleX from '@lucide/svelte/icons/circle-x';
 
@@ -24,6 +24,19 @@
 	<Card.Content class="grid gap-3">
 		{#if !batch.finished}
 			<Progress value={batch.overallProgress} class="h-2" />
+			<div class="text-muted-foreground flex items-center justify-between gap-3 text-xs">
+				<span>{batch.overallProgress}%</span>
+				{#if batch.active?.stalled}
+					<span class="text-amber-600 dark:text-amber-500">stalled — no data moving</span>
+				{:else}
+					<span>
+						{formatRate(batch.bytesPerSecond)}
+						{#if Number.isFinite(batch.remainingSeconds)}
+							· {formatDuration(batch.remainingSeconds)} left
+						{/if}
+					</span>
+				{/if}
+			</div>
 		{/if}
 
 		{#each batch.items as item (item.file.name + item.file.size)}
@@ -42,6 +55,8 @@
 							failed
 						{:else if item.status === 'done'}
 							{formatBytes(item.file.size)}
+						{:else if item.status === 'uploading'}
+							{item.progress}% · {item.stalled ? 'stalled' : formatRate(item.bytesPerSecond)}
 						{:else}
 							{item.progress}%
 						{/if}

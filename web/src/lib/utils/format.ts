@@ -40,6 +40,24 @@ export function parseBytes(input: string): number | null {
 	return Math.round(amount * multiplier);
 }
 
+// A rate of zero means "not measured yet" or "nothing moving", both of which are
+// better shown as no number than as a confident 0 B/s.
+export function formatRate(bytesPerSecond: number): string {
+	if (!bytesPerSecond) return '—';
+	return `${formatBytes(bytesPerSecond)}/s`;
+}
+
+export function formatDuration(seconds: number): string {
+	if (!Number.isFinite(seconds) || seconds <= 0) return '—';
+	if (seconds < 60) return `${Math.round(seconds)}s`;
+
+	const minutes = Math.round(seconds / 60);
+	if (minutes < 60) return `${minutes} min`;
+
+	const hours = Math.floor(minutes / 60);
+	return `${hours}h ${minutes % 60}m`;
+}
+
 export function formatDate(iso: string | undefined | null): string {
 	if (!iso) return '—';
 	return new Date(iso).toLocaleString(undefined, {
