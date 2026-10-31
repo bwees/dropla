@@ -13,7 +13,6 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
 	"github.com/tus/tusd/v2/pkg/filelocker"
-	"github.com/tus/tusd/v2/pkg/filestore"
 	tusd "github.com/tus/tusd/v2/pkg/handler"
 )
 
@@ -36,8 +35,7 @@ func NewUploadsController(
 	}
 
 	composer := tusd.NewStoreComposer()
-	fileStore := filestore.New(store.TusDir())
-	fileStore.UseIn(composer)
+	storage.NewSyncingStore(store.TusDir()).UseIn(composer)
 	// A lock store is required for correctness, not optional: without it two
 	// concurrent PATCHes to the same upload can interleave.
 	filelocker.New(store.TusDir()).UseIn(composer)
